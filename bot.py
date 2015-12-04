@@ -6,6 +6,7 @@ import os
 import time
 import sys
 import getpass
+import ConfigParser
 
 class MessageLogger:
     """
@@ -121,15 +122,26 @@ class LogBotFactory(protocol.ClientFactory):
 
 if __name__ == '__main__':
     from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand
-    # initialize logging
-    log.startLogging(sys.stdout)
 
-    password = getpass.getpass()
+    config = ConfigParser.ConfigParser()
+    config.read('bot.config')
+
+    server = config.get('main', 'server')
+    port = config.getint('main', 'port')
+    channel = config.get('main', 'channel')
+    user = config.get('main', 'user')
+    password = config.get('main', 'password')
+
+    if password == -1:
+        password = getpass.getpass()
+
+        # initialize logging
+    log.startLogging(sys.stdout)
     # create factory protocol and application
-    f = LogBotFactory(sys.argv[1], sys.argv[2], password, sys.argv[3])
+    f = LogBotFactory(channel, user, password, "log")
 
     # connect factory to this host and port
-    reactor.connectSSL("irc.transip.us", 6697, f, ssl.ClientContextFactory())
+    reactor.connectSSL(server, port, f, ssl.ClientContextFactory())
 
     # run bot
     reactor.run()
