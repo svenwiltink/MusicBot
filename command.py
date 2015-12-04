@@ -20,19 +20,11 @@ class CommandManager():
 
 class CommandHandler:
 
-    whitelist = [
-        'Sven',
-        'sGoen',
-        'Tom',
-        'Tim',
-        'Roos',
-        'hvandermeulen',
-        'Justin',
-        'sebastien',
-    ]
-
     def __init__(self, commandManager):
         self.commandManager = commandManager
+        whitelistFile = open('whitelist.txt')
+        lines = whitelistFile.read().splitlines()
+        self.whitelist = lines
 
     def handleCommand(self, bot, user, commandName, arguments):
         if user not in self.whitelist:
