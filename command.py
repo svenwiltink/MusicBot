@@ -22,7 +22,7 @@ class CommandHandler:
 
     def __init__(self, commandManager):
         self.commandManager = commandManager
-        whitelistFile = open('whitelist.txt')
+        whitelistFile = open(bot.whitelistFile)
         lines = whitelistFile.read().splitlines()
         self.whitelist = lines
 
@@ -38,6 +38,26 @@ class CommandHandler:
     def getCommandManager(self):
         return self.commandManager
 
+    def addUserToWhitelist(self, user):
+        if user not in self.whitelist:
+            self.whitelist.append(user)
+            self.saveWhitelist()
+            return
+
+    def removeUserFromWhitelist(self, user):
+        if user in self.whitelist:
+            self.whitelist.remove(user)
+            self.saveWhitelist()
+
+    def saveWhitelist(self):
+        filename = bot.whitelistFile
+        whitelistfile = open(filename, 'w')
+        for user in self.whitelist:
+            whitelistfile.write(user + "\n")
+        whitelistfile.close()
+
+    def getWhitelist(self):
+        return self.whitelist
 
 class Command(object):
 
@@ -104,3 +124,26 @@ class VolDownCommand(Command):
 
     def execute(self, bot, user, params):
         os.system("amixer -D pulse sset Master 10%- >/dev/null")
+
+class WhitelistCommand(Command):
+
+    name = 'whitelist'
+
+    def execute(self, instance, user, params):
+        if user == instance.getMaster():
+            handler = self._getCommandHandler(instance)
+            if len(params) == 2:
+                addOrRemove = params[0]
+                if addOrRemove == 'add':
+                    handler.addUserToWhitelist(params[1])
+                    return "user added to whitelist"
+                elif addOrRemove == 'remove':
+                    handler.removeUserFromWhitelist(params[1])
+                    return "user removed from whitelist"
+            elif len(params) == 1:
+                if params[0] == 'show':
+                    whitelist = handler.getWhitelist()
+                    return "whitelisted people: " + ", ".join(whitelist)
+
+    def _getCommandHandler(self, botInstance):
+        return botInstance.getCommandHandler()

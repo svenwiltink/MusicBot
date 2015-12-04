@@ -83,6 +83,9 @@ class MusicBot(irc.IRCClient):
     def getCommandHandler(self):
         return self.commandHandler
 
+    def getMaster(self):
+        return self.factory.master
+
 
 
 
@@ -92,11 +95,12 @@ class LogBotFactory(protocol.ClientFactory):
     A new protocol instance will be created each time we connect to the server.
     """
 
-    def __init__(self, channel, nickname, password, filename):
+    def __init__(self, channel, nickname, password, master, filename):
         self.channel = channel
         self.filename = filename
         self.nickname = nickname
         self.password = password
+        self.master = master
 
     def buildProtocol(self, addr):
         p = MusicBot()
@@ -106,6 +110,7 @@ class LogBotFactory(protocol.ClientFactory):
         p.registerCommand(CurrentCommand())
         p.registerCommand(VolUpCommand())
         p.registerCommand(VolDownCommand())
+        p.registerCommand(WhitelistCommand())
         p.factory = self
         p.nickname = self.nickname
         p.password = self.password
@@ -121,7 +126,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, WhitelistCommand
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')
@@ -131,6 +136,7 @@ if __name__ == '__main__':
     channel = config.get('main', 'channel')
     user = config.get('main', 'user')
     password = config.get('main', 'password')
+    master = config.get('main', 'master')
 
     if password == -1:
         password = getpass.getpass()
@@ -138,7 +144,7 @@ if __name__ == '__main__':
         # initialize logging
     log.startLogging(sys.stdout)
     # create factory protocol and application
-    f = LogBotFactory(channel, user, password, "log")
+    f = LogBotFactory(channel, user, password, master, "log")
 
     # connect factory to this host and port
     reactor.connectSSL(server, port, f, ssl.ClientContextFactory())
@@ -147,3 +153,4 @@ if __name__ == '__main__':
     reactor.run()
 
 spotifyScript = os.path.realpath(os.path.dirname(__file__)) + "/spotify.sh"
+whitelistFile = "whitelist.txt"
