@@ -129,7 +129,7 @@ if __name__ == '__main__':
     f = LogBotFactory(sys.argv[1], sys.argv[2], password, sys.argv[3])
 
     # connect factory to this host and port
-    reactor.connectSSL("znc.transip.us", 6697, f, ssl.ClientContextFactory())
+    reactor.connectSSL("irc.transip.us", 6697, f, ssl.ClientContextFactory())
 
     # run bot
     reactor.run()
