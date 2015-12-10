@@ -110,6 +110,7 @@ class LogBotFactory(protocol.ClientFactory):
         p.registerCommand(CurrentCommand())
         p.registerCommand(VolUpCommand())
         p.registerCommand(VolDownCommand())
+        p.registerCommand(SetVolumeCommand())
         p.registerCommand(WhitelistCommand())
         p.factory = self
         p.nickname = self.nickname
@@ -126,7 +127,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, WhitelistCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')
