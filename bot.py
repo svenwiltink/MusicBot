@@ -130,7 +130,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand, CurrentUrlCommand, PlayCommand, PauseCommand, CurrentMetaCommand
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')

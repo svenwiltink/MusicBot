@@ -29,7 +29,7 @@ class CommandHandler:
     def handleCommand(self, bot, user, commandName, arguments):
         if user not in self.whitelist:
             return
-        print "handeling command " + commandName
+        print "Received command " + commandName
         command = self.commandManager.getCommand(commandName)
         if command is None:
             return "Command not found"
@@ -69,104 +69,93 @@ class Command(object):
     def getName(self):
         return self.name
 
-
 class HelpCommand(Command):
-
     name = 'help'
     def execute(self, bot, user, params):
         helpText = "Available commands: "
         commands = bot.getCommandHandler().getCommandManager().getAvailableCommands()
         helpText += ", ".join(commands)
-
         bot.sendMessage(helpText)
-
 
 class SpotifyCommand(Command):
 
     def executeSpotifyCommand(self, command):
         return subprocess.check_output([bot.spotifyScript, command])
 
+    def executeSpotifyCommandWithArgs(self, args):
+        return subprocess.check_output([bot.spotifyScript] + args)
+
+class PlayCommand(SpotifyCommand):
+    name = 'play'
+    def execute(self, bot, user, params):
+        return self.executeSpotifyCommand('play');
+
+class PauseCommand(SpotifyCommand):
+    name = 'pause'
+    def execute(self, bot, user, params):
+        return self.executeSpotifyCommand('pause');
 
 class NextCommand(SpotifyCommand):
-
     name = 'next'
-
     def execute(self, bot, user, params):
         self.executeSpotifyCommand('next')
         return "skipping song"
 
-
 class PrevCommand(SpotifyCommand):
-
     name = 'prev'
-
     def execute(self, bot, user, params):
         self.executeSpotifyCommand('prev')
         return "playing previous song"
 
+class SearchCommand(SpotifyCommand):
+    name = 'search'
+    def execute(self, bot, user, params):
+        return self.executeSpotifyCommandWithArgs(['search'] + params)
 
 class OpenUriCommand(SpotifyCommand):
-
     name = 'open'
-
     def execute(self, bot, user, params):
-        self.executeSpotifyCommand('open ' + params[0])
-        return "opening '" + params[0] + "'"
-
-
-class SearchCommand(SpotifyCommand):
-
-    name = 'search'
-
-    def execute(self, bot, user, params):
-        self.executeSpotifyCommand('open ' + params[0])
-        return "searching for '" + params[0] + "' and playing best result"
-
+        self.executeSpotifyCommand(['open', params[0]])
+        bot.sendMessage("Will attempt to play '" + params[0] + "'")
+        return self.executeSpotifyCommand('current')
 
 class CurrentCommand(SpotifyCommand):
-
     name = 'current'
-
     def execute(self, bot, user, params):
         return self.executeSpotifyCommand('current')
 
-
 class CurrentUriCommand(SpotifyCommand):
-
     name = 'currenturi'
-
     def execute(self, bot, user, params):
         return self.executeSpotifyCommand('url')
 
+class CurrentUrlCommand(SpotifyCommand):
+    name = 'currenturl'
+    def execute(self, bot, user, params):
+        return self.executeSpotifyCommand('url')
+
+class CurrentMetaCommand(SpotifyCommand):
+    name = 'currentmeta'
+    def execute(self, bot, user, params):
+        return self.executeSpotifyCommand('metadata')
 
 class VolUpCommand(Command):
-
     name = 'vol++'
-
     def execute(self, bot, user, params):
         os.system("amixer -D pulse sset Master 10%+ >/dev/null")
 
-
 class VolDownCommand(Command):
-
     name = 'vol--'
-
     def execute(self, bot, user, params):
         os.system("amixer -D pulse sset Master 10%- >/dev/null")
 
-
 class SetVolumeCommand(Command):
-
     name = 'vol'
-
     def execute(self, bot, user, params):
         os.system("amixer -D pulse sset Master " + params[0]  + "%  >/dev/null")
 
-
 class WhitelistCommand(Command):
-
     name = 'whitelist'
-
     def execute(self, instance, user, params):
         if user == instance.getMaster():
             handler = self._getCommandHandler(instance)
