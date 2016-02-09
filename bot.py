@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from twisted.words.protocols import irc
 from twisted.internet import ssl, reactor, protocol
 from twisted.python import log
@@ -78,15 +80,13 @@ class MusicBot(irc.IRCClient):
         print message
         lines = message.split("\n")
         for line in lines:
-                self.say(self.factory.channel, line)
+            self.say(self.factory.channel, line)
 
     def getCommandHandler(self):
         return self.commandHandler
 
     def getMaster(self):
         return self.factory.master
-
-
 
 
 class LogBotFactory(protocol.ClientFactory):
@@ -108,6 +108,9 @@ class LogBotFactory(protocol.ClientFactory):
         p.registerCommand(NextCommand())
         p.registerCommand(PrevCommand())
         p.registerCommand(CurrentCommand())
+        p.registerCommand(CurrentUriCommand())
+        p.registerCommand(OpenUriCommand())
+        p.registerCommand(SearchCommand())
         p.registerCommand(VolUpCommand())
         p.registerCommand(VolDownCommand())
         p.registerCommand(SetVolumeCommand())
@@ -127,7 +130,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')

@@ -105,14 +105,42 @@ class PrevCommand(SpotifyCommand):
         return "playing previous song"
 
 
+class OpenUriCommand(SpotifyCommand):
+
+    name = 'open'
+
+    def execute(self, bot, user, params):
+        self.executeSpotifyCommand('open ' + params[0])
+        return "opening '" + params[0] + "'"
+
+
+class SearchCommand(SpotifyCommand):
+
+    name = 'search'
+
+    def execute(self, bot, user, params):
+        self.executeSpotifyCommand('open ' + params[0])
+        return "searching for '" + params[0] + "' and playing best result"
+
+
 class CurrentCommand(SpotifyCommand):
+
     name = 'current'
 
     def execute(self, bot, user, params):
         return self.executeSpotifyCommand('current')
 
 
+class CurrentUriCommand(SpotifyCommand):
+
+    name = 'currenturi'
+
+    def execute(self, bot, user, params):
+        return self.executeSpotifyCommand('url')
+
+
 class VolUpCommand(Command):
+
     name = 'vol++'
 
     def execute(self, bot, user, params):
@@ -120,16 +148,20 @@ class VolUpCommand(Command):
 
 
 class VolDownCommand(Command):
+
     name = 'vol--'
 
     def execute(self, bot, user, params):
         os.system("amixer -D pulse sset Master 10%- >/dev/null")
 
+
 class SetVolumeCommand(Command):
+
     name = 'vol'
 
     def execute(self, bot, user, params):
         os.system("amixer -D pulse sset Master " + params[0]  + "%  >/dev/null")
+
 
 class WhitelistCommand(Command):
 
