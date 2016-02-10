@@ -115,9 +115,21 @@ class SearchCommand(SpotifyCommand):
 class OpenUriCommand(SpotifyCommand):
     name = 'open'
     def execute(self, bot, user, params):
-        self.executeSpotifyCommand(['open', params[0]])
+        self.executeSpotifyCommandWithArgs(['open', params[0]])
         bot.sendMessage("Will attempt to play '" + params[0] + "'")
         return self.executeSpotifyCommand('current')
+
+class SvennebananCommand(SpotifyCommand):
+    name = 'svendebanaan'
+    def execute(self, bot, user, params):
+        self.executeSpotifyCommandWithArgs(['open', "spotify:track:0YQlHiQDUDTXQ7jiItaJPx"])
+        return "SVEN DE BANAAN" 
+
+class PiemelsCommand(SpotifyCommand):
+    name = 'piemels'
+    def execute(self, bot, user, params):
+        self.executeSpotifyCommandWithArgs(['open', "spotify:track:2cIw6pBoYvy0c8t4NgclB3"])
+        return "ODE AAN DE PIEMELS!"
 
 class CurrentCommand(SpotifyCommand):
     name = 'current'

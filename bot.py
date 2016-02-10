@@ -107,14 +107,20 @@ class LogBotFactory(protocol.ClientFactory):
         p.registerCommand(HelpCommand())
         p.registerCommand(NextCommand())
         p.registerCommand(PrevCommand())
+        p.registerCommand(PauseCommand())
+        p.registerCommand(PlayCommand())
         p.registerCommand(CurrentCommand())
         p.registerCommand(CurrentUriCommand())
+        p.registerCommand(CurrentUrlCommand())
+        p.registerCommand(CurrentMetaCommand())
         p.registerCommand(OpenUriCommand())
         p.registerCommand(SearchCommand())
         p.registerCommand(VolUpCommand())
         p.registerCommand(VolDownCommand())
         p.registerCommand(SetVolumeCommand())
         p.registerCommand(WhitelistCommand())
+        p.registerCommand(PiemelsCommand())
+        p.registerCommand(SvennebananCommand())
         p.factory = self
         p.nickname = self.nickname
         p.password = self.password
@@ -130,7 +136,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand, CurrentUrlCommand, PlayCommand, PauseCommand, CurrentMetaCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand, CurrentUrlCommand, PlayCommand, PauseCommand, CurrentMetaCommand, SvennebananCommand, PiemelsCommand 
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')
