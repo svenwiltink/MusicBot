@@ -164,7 +164,10 @@ class VolDownCommand(Command):
 class SetVolumeCommand(Command):
     name = 'vol'
     def execute(self, bot, user, params):
-        os.system("amixer -D pulse sset Master " + params[0]  + "%  >/dev/null")
+        if len(params) != 0:
+            os.system("amixer -D pulse sset Master " + params[0]  + "%  >/dev/null")
+            return
+        return os.popen("amixer -D pulse sget Master | awk '/Front.+Playback/ {print $6==\"[off]\"?$6:$5}' | tr -d '[]' | tail -1").read()
 
 class WhitelistCommand(Command):
     name = 'whitelist'
