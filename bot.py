@@ -96,26 +96,32 @@ class LogBotFactory(protocol.ClientFactory):
     """
 
     def __init__(self, channel, nickname, password, master, filename):
-        self.channel = channel
+        self.channel  = channel
         self.filename = filename
         self.nickname = nickname
         self.password = password
-        self.master = master
+        self.master   = master
 
     def buildProtocol(self, addr):
         p = MusicBot()
+        p.registerCommand(CurrentCommand())
+        p.registerCommand(CurrentMetaCommand())
+        p.registerCommand(CurrentUriCommand())
+        p.registerCommand(CurrentUrlCommand())
         p.registerCommand(HelpCommand())
         p.registerCommand(NextCommand())
-        p.registerCommand(PrevCommand())
-        p.registerCommand(CurrentCommand())
-        p.registerCommand(CurrentUriCommand())
         p.registerCommand(OpenUriCommand())
-        p.registerCommand(SearchCommand())
-        p.registerCommand(VolUpCommand())
-        p.registerCommand(VolDownCommand())
+        p.registerCommand(PauseCommand())
+        p.registerCommand(PiemelsCommand())
+        p.registerCommand(PlayCommand())
+        p.registerCommand(PrevCommand())
+        p.registerCommand(SvennebananCommand())
         p.registerCommand(SetVolumeCommand())
+        p.registerCommand(VolDownCommand())
+        p.registerCommand(VolUpCommand())
+        p.registerCommand(WhichUriCommand())
         p.registerCommand(WhitelistCommand())
-        p.factory = self
+        p.factory  = self
         p.nickname = self.nickname
         p.password = self.password
         return p
@@ -130,7 +136,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand, CurrentUrlCommand, PlayCommand, PauseCommand, CurrentMetaCommand, SvennebananCommand, PiemelsCommand, WhichUriCommand
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')
