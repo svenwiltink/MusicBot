@@ -1,6 +1,9 @@
 import bot
 import subprocess
 import os
+import urllib2
+from bs4 import BeautifulSoup
+
 class CommandManager():
 
     commands = {}
@@ -115,9 +118,37 @@ class SearchCommand(SpotifyCommand):
 class OpenUriCommand(SpotifyCommand):
     name = 'open'
     def execute(self, bot, user, params):
-        self.executeSpotifyCommandWithArgs(['open', params[0]])
-        bot.sendMessage("Will attempt to play '" + params[0] + "'")
-        return self.executeSpotifyCommand('current')
+        if len(params) < 1 or len(params) > 1:
+            return "The correct syntax is: !music open <SpotifyURI>"
+
+        linkData      = params[0].split(':')
+        spotifyWebUri = '/'.join(linkData)
+        spotifyWebUri = spotifyWebUri.replace('spotify', 'https://open.spotify.com')
+
+        if linkData[0] == 'spotify':
+            soup      = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
+            songTitle = soup.title.string.encode('ascii', 'ignore')
+            self.executeSpotifyCommandWithArgs(['open', params[0]])
+            return "Will attempt to play '" + params[0] + "' (" + songTitle + ")"
+        else:
+            return "Invalid Spotify url (spotify:*)"
+
+class WhichUriCommand(SpotifyCommand):
+    name = 'which'
+    def execute(self, bot, user, params):
+        if len(params) < 1 or len(params) > 1:
+            return "The correct syntax is: !music which <SpotifyURI>"
+
+        linkData      = params[0].split(':')
+        spotifyWebUri = '/'.join(linkData)
+        spotifyWebUri = spotifyWebUri.replace('spotify', 'https://open.spotify.com')
+
+        if linkData[0] == 'spotify':
+            soup      = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
+            songTitle = soup.title.string.replace(' on Spotify', '')
+            return songTitle.encode('ascii','ignore')
+        else:
+            return "Invalid Spotify url (spotify:*)"
 
 class SvennebananCommand(SpotifyCommand):
     name = 'svendebanaan'
@@ -134,7 +165,14 @@ class PiemelsCommand(SpotifyCommand):
 class CurrentCommand(SpotifyCommand):
     name = 'current'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommand('current')
+        output = self.executeSpotifyCommand('current')
+        output = output.strip()
+        output = output.replace('Artist  ', 'Artist: ');
+        output = output.replace('Album   ', 'Album: ');
+        output = output.replace('Title   ', 'Title: ');
+        output = output.split('\n')
+        output = ' | '.join(output);
+        return output
 
 class CurrentUriCommand(SpotifyCommand):
     name = 'currenturi'
