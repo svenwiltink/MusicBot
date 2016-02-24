@@ -80,94 +80,142 @@ class HelpCommand(Command):
         helpText += ", ".join(commands)
         bot.sendMessage(helpText)
 
-class SpotifyCommand(Command):
+class MusicCommand(Command):
 
-    def executeSpotifyCommand(self, command):
+    def stopYoutubePlayback(self):
+        subprocess.Popen(['killall', 'mpv'])
+        subprocess.Popen(['killall', 'mpsyt'])
+
+    def stopSpotifyPlayback(self):
+        self.executeSpotifycommand('pause');
+
+    def playSpecificSpotifySong(self, arg):
+        self.stopYoutubePlayback()
+        self.executeSpotifycommandWithArgs(['open', arg])
+        os.system("amixer -D pulse sset Master 100% >/dev/null")
+
+    def executeSpotifycommand(self, command):
         return subprocess.check_output([bot.spotifyScript, command])
 
-    def executeSpotifyCommandWithArgs(self, args):
+    def executeSpotifycommandWithArgs(self, args):
         return subprocess.check_output([bot.spotifyScript] + args)
 
-class PlayCommand(SpotifyCommand):
+    def executeYoutubeCommand(self, args):
+        return subprocess.check_output([bot.youtubeScript] + args)
+
+class PlayCommand(MusicCommand):
     name = 'play'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommand('play');
+        return self.executeSpotifycommand('play');
 
-class PauseCommand(SpotifyCommand):
+class PauseCommand(MusicCommand):
     name = 'pause'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommand('pause');
+        return self.executeSpotifycommand('pause');
 
-class NextCommand(SpotifyCommand):
+class NextCommand(MusicCommand):
     name = 'next'
     def execute(self, bot, user, params):
-        self.executeSpotifyCommand('next')
+        self.executeSpotifycommand('next')
         return "skipping song"
 
-class PrevCommand(SpotifyCommand):
+class PrevCommand(MusicCommand):
     name = 'prev'
     def execute(self, bot, user, params):
-        self.executeSpotifyCommand('prev')
+        self.executeSpotifycommand('prev')
         return "playing previous song"
 
-class SearchCommand(SpotifyCommand):
+class SearchCommand(MusicCommand):
     name = 'search'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommandWithArgs(['search'] + params)
+        result = self.executeSpotifycommandWithArgs(['search'] + params)
+        linkData = result.split(':')
+        spotifyWebUri = '/'.join(linkData)
+        spotifyWebUri = spotifyWebUri.replace('spotify', 'https://open.spotify.com', 1)
 
-class OpenUriCommand(SpotifyCommand):
+        if linkData[0] == 'spotify':
+            self.stopYoutubePlayback()
+            print spotifyWebUri
+            soup = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
+            songTitle = soup.title.string.encode('ascii','ignore')
+            songtitle = songTitle.replace('on Spotify', '')
+            return "Best result: '" + songTitle + "'"
+        else:
+            return "No search results"
+
+class OpenUriCommand(MusicCommand):
     name = 'open'
     def execute(self, bot, user, params):
         if len(params) < 1 or len(params) > 1:
             return "The correct syntax is: !music open <SpotifyURI>"
 
-        linkData      = params[0].split(':')
+        linkData = params[0].split(':')
         spotifyWebUri = '/'.join(linkData)
         spotifyWebUri = spotifyWebUri.replace('spotify', 'https://open.spotify.com', 1)
 
         if linkData[0] == 'spotify':
             print spotifyWebUri
-            soup      = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
-            songTitle = soup.title.string.encode('ascii', 'ignore')
+            soup = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
+            songTitle = soup.title.string.encode('ascii','ignore')
             songtitle = songTitle.replace('on Spotify', '')
-            self.executeSpotifyCommandWithArgs(['open', params[0]])
+            self.executeSpotifycommandWithArgs(['open', params[0]])
+            self.stopYoutubePlayback()
             return "Will attempt to play '" + params[0] + "' (" + songTitle + ")"
         else:
             return "Invalid Spotify url (spotify:*)"
 
-class WhichUriCommand(SpotifyCommand):
+class WhichUriCommand(MusicCommand):
     name = 'which'
     def execute(self, bot, user, params):
         if len(params) < 1 or len(params) > 1:
             return "The correct syntax is: !music which <SpotifyURI>"
 
-        linkData      = params[0].split(':')
+        linkData = params[0].split(':')
         spotifyWebUri = '/'.join(linkData)
         spotifyWebUri = spotifyWebUri.replace('spotify', 'https://open.spotify.com')
 
         if linkData[0] == 'spotify':
-            soup      = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
+            soup = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
             songTitle = soup.title.string.replace(' on Spotify', '')
             return songTitle.encode('ascii','ignore')
         else:
             return "Invalid Spotify url (spotify:*)"
 
-class SvennebananCommand(SpotifyCommand):
+class SvennebananCommand(MusicCommand):
     name = 'svendebanaan'
     def execute(self, bot, user, params):
-        self.executeSpotifyCommandWithArgs(['open', "spotify:track:0YQlHiQDUDTXQ7jiItaJPx"])
+        self.playSpecificSpotifySong("spotify:track:0YQlHiQDUDTXQ7jiItaJPx")
         return "SVEN DE BANAAN" 
 
-class PiemelsCommand(SpotifyCommand):
-    name = 'piemels'
+class PiranhaCommand(MusicCommand):
+    name = 'piranha'
     def execute(self, bot, user, params):
-        self.executeSpotifyCommandWithArgs(['open', "spotify:track:2cIw6pBoYvy0c8t4NgclB3"])
-        return "ODE AAN DE PIEMELS!"
+        self.playSpecificSpotifySong("spotify:track:0byWk11huVUJFC0TGuy1jJ")
+        return "PiripiPiripiPiripiPiripiPiranha"
 
-class CurrentCommand(SpotifyCommand):
+class LiveIsLifeCommand(MusicCommand):
+    name = 'live'
+    def execute(self, bot, user, params):
+        self.playSpecificSpotifySong("spotify:track:5luOvrlnzfvJQdQjrScVj4")
+        return "Staat het LIVE!?!!11"
+
+class HoeCommand(MusicCommand):
+    name = 'hoe'
+    def execute(self, bot, user, params):
+        self.playSpecificSpotifySong("spotify:track:6YfvqnvQS7rsSm8Py2Rw8i")
+        return "Hoeeeeeeeeeeee?"
+
+class YoutubeCommand(MusicCommand):
+    name = 'yt'
+    def execute(self, bot, user, params):
+        self.stopSpotifyPlayback()
+        self.stopYoutubePlayback()
+        subprocess.Popen(['/usr/local/bin/mpsyt', 'playurl'] + [params[0]+',q'])
+
+class CurrentCommand(MusicCommand):
     name = 'current'
     def execute(self, bot, user, params):
-        output = self.executeSpotifyCommand('current')
+        output = self.executeSpotifycommand('current')
         output = output.strip()
         output = output.replace('Artist  ', 'Artist: ');
         output = output.replace('Album   ', 'Album: ');
@@ -176,20 +224,20 @@ class CurrentCommand(SpotifyCommand):
         output = ' | '.join(output);
         return output
 
-class CurrentUriCommand(SpotifyCommand):
+class CurrentUriCommand(MusicCommand):
     name = 'currenturi'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommand('url')
+        return self.executeSpotifycommand('uri')
 
-class CurrentUrlCommand(SpotifyCommand):
+class CurrentUrlCommand(MusicCommand):
     name = 'currenturl'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommand('url')
+        return self.executeSpotifycommand('url')
 
-class CurrentMetaCommand(SpotifyCommand):
+class CurrentMetaCommand(MusicCommand):
     name = 'currentmeta'
     def execute(self, bot, user, params):
-        return self.executeSpotifyCommand('metadata')
+        return self.executeSpotifycommand('metadata')
 
 class VolUpCommand(Command):
     name = 'vol++'
@@ -207,7 +255,7 @@ class SetVolumeCommand(Command):
         if len(params) != 0:
             os.system("amixer -D pulse sset Master " + params[0]  + "%  >/dev/null")
             return
-        return os.popen("amixer -D pulse sget Master | awk '/Front.+Playback/ {print $6==\"[off]\"?$6:$5}' | tr -d '[]' | tail -1").read()
+        return "Current volume: " + os.popen("amixer -D pulse sget Master | awk '/Front.+Playback/ {print $6==\"[off]\"?$6:$5}' | tr -d '[]' | tail -1").read()
 
 class WhitelistCommand(Command):
     name = 'whitelist'

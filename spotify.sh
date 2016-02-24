@@ -159,6 +159,11 @@ function sp-url {
   echo "http://open.spotify.com/track/$TRACK"
 }
 
+function sp-uri {
+  TRACK=$(sp-metadata | grep "url" | cut -d'|' -f2)
+  echo "$TRACK"
+}
+
 function sp-clip {
   # Copies the HTTP url.
 
@@ -212,11 +217,12 @@ function sp-search {
 
   Q="$@"
   SPTFY_URI=$( \
-    curl -s -G  --data-urlencode "q=$Q" ws.spotify.com/search/1/track \
+    curl -s -G --data-urlencode "q=$Q" --data-urlencode "type=track" -d "limit=1" 'https://api.spotify.com/v1/search' \
     | grep -E -o "spotify:track:[a-zA-Z0-9]+" -m 1 \
   )
 
   sp-open $SPTFY_URI
+  echo "$SPTFY_URI"
 }
 
 function sp-version {
