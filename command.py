@@ -87,17 +87,17 @@ class MusicCommand(Command):
         subprocess.Popen(['killall', 'mpsyt'])
 
     def stopSpotifyPlayback(self):
-        self.executeSpotifycommand('pause');
+        self.executeSpotifyCommand('pause');
 
     def playSpecificSpotifySong(self, arg):
         self.stopYoutubePlayback()
-        self.executeSpotifycommandWithArgs(['open', arg])
+        self.executeSpotifyCommandWithArgs(['open', arg])
         os.system("amixer -D pulse sset Master 100% >/dev/null")
 
-    def executeSpotifycommand(self, command):
+    def executeSpotifyCommand(self, command):
         return subprocess.check_output([bot.spotifyScript, command])
 
-    def executeSpotifycommandWithArgs(self, args):
+    def executeSpotifyCommandWithArgs(self, args):
         return subprocess.check_output([bot.spotifyScript] + args)
 
     def executeYoutubeCommand(self, args):
@@ -106,29 +106,29 @@ class MusicCommand(Command):
 class PlayCommand(MusicCommand):
     name = 'play'
     def execute(self, bot, user, params):
-        return self.executeSpotifycommand('play');
+        return self.executeSpotifyCommand('play');
 
 class PauseCommand(MusicCommand):
     name = 'pause'
     def execute(self, bot, user, params):
-        return self.executeSpotifycommand('pause');
+        return self.executeSpotifyCommand('pause');
 
 class NextCommand(MusicCommand):
     name = 'next'
     def execute(self, bot, user, params):
-        self.executeSpotifycommand('next')
+        self.executeSpotifyCommand('next')
         return "skipping song"
 
 class PrevCommand(MusicCommand):
     name = 'prev'
     def execute(self, bot, user, params):
-        self.executeSpotifycommand('prev')
+        self.executeSpotifyCommand('prev')
         return "playing previous song"
 
 class SearchCommand(MusicCommand):
     name = 'search'
     def execute(self, bot, user, params):
-        result = self.executeSpotifycommandWithArgs(['search'] + params)
+        result = self.executeSpotifyCommandWithArgs(['search'] + params)
         linkData = result.split(':')
         spotifyWebUri = '/'.join(linkData)
         spotifyWebUri = spotifyWebUri.replace('spotify', 'https://open.spotify.com', 1)
@@ -158,7 +158,7 @@ class OpenUriCommand(MusicCommand):
             soup = BeautifulSoup(urllib2.urlopen(spotifyWebUri), "lxml")
             songTitle = soup.title.string.encode('ascii','ignore')
             songtitle = songTitle.replace('on Spotify', '')
-            self.executeSpotifycommandWithArgs(['open', params[0]])
+            self.executeSpotifyCommandWithArgs(['open', params[0]])
             self.stopYoutubePlayback()
             return "Will attempt to play '" + params[0] + "' (" + songTitle + ")"
         else:
@@ -215,7 +215,7 @@ class YoutubeCommand(MusicCommand):
 class CurrentCommand(MusicCommand):
     name = 'current'
     def execute(self, bot, user, params):
-        output = self.executeSpotifycommand('current')
+        output = self.executeSpotifyCommand('current')
         output = output.strip()
         output = output.replace('Artist  ', 'Artist: ');
         output = output.replace('Album   ', 'Album: ');
@@ -227,17 +227,17 @@ class CurrentCommand(MusicCommand):
 class CurrentUriCommand(MusicCommand):
     name = 'currenturi'
     def execute(self, bot, user, params):
-        return self.executeSpotifycommand('uri')
+        return self.executeSpotifyCommand('uri')
 
 class CurrentUrlCommand(MusicCommand):
     name = 'currenturl'
     def execute(self, bot, user, params):
-        return self.executeSpotifycommand('url')
+        return self.executeSpotifyCommand('url')
 
 class CurrentMetaCommand(MusicCommand):
     name = 'currentmeta'
     def execute(self, bot, user, params):
-        return self.executeSpotifycommand('metadata')
+        return self.executeSpotifyCommand('metadata')
 
 class VolUpCommand(Command):
     name = 'vol++'
