@@ -27,7 +27,6 @@ class MessageLogger:
     def close(self):
         self.file.close()
 
-
 class MusicBot(irc.IRCClient):
     """A logging IRC bot."""
 
@@ -88,7 +87,6 @@ class MusicBot(irc.IRCClient):
     def getMaster(self):
         return self.factory.master
 
-
 class LogBotFactory(protocol.ClientFactory):
     """A factory for LogBots.
 
@@ -107,14 +105,24 @@ class LogBotFactory(protocol.ClientFactory):
         p.registerCommand(HelpCommand())
         p.registerCommand(NextCommand())
         p.registerCommand(PrevCommand())
+        p.registerCommand(PauseCommand())
+        p.registerCommand(PlayCommand())
         p.registerCommand(CurrentCommand())
         p.registerCommand(CurrentUriCommand())
+        p.registerCommand(CurrentUrlCommand())
+        p.registerCommand(CurrentMetaCommand())
         p.registerCommand(OpenUriCommand())
         p.registerCommand(SearchCommand())
         p.registerCommand(VolUpCommand())
         p.registerCommand(VolDownCommand())
         p.registerCommand(SetVolumeCommand())
+        p.registerCommand(LiveIsLifeCommand())
+        p.registerCommand(PiranhaCommand())
+        p.registerCommand(SvennebananCommand())
+        p.registerCommand(HoeCommand())
         p.registerCommand(WhitelistCommand())
+        p.registerCommand(WhichUriCommand())
+        p.registerCommand(YoutubeCommand())
         p.factory = self
         p.nickname = self.nickname
         p.password = self.password
@@ -130,7 +138,7 @@ class LogBotFactory(protocol.ClientFactory):
 
 
 if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand
+    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand, CurrentUrlCommand, PlayCommand, PauseCommand, CurrentMetaCommand, SvennebananCommand, PiranhaCommand, WhichUriCommand, LiveIsLifeCommand, YoutubeCommand, HoeCommand
 
     config = ConfigParser.ConfigParser()
     config.read('bot.config')
@@ -157,4 +165,5 @@ if __name__ == '__main__':
     reactor.run()
 
 spotifyScript = os.path.realpath(os.path.dirname(__file__)) + "/spotify.sh"
+youtubeScript = "/usr/local/bin/mpsyt"
 whitelistFile = "whitelist.txt"
