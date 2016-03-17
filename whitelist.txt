@@ -1,5 +1,0 @@
-Usernames
-here
-seperated
-by
-line endings

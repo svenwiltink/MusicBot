@@ -1,0 +1,11 @@
+[main]
+server=
+port=6697
+channel=#fuckit
+ident=swiltink
+nick=SvenB0t
+realname=Sven Wiltink
+password=
+master=swiltink
+spotify_user=
+spotify_pass=

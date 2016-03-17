@@ -1,2 +1,11 @@
+.idea/
 *.pyc
+*.egg-info
 log
+tmp/
+venv/
+virtualenv/
+bot.cfg
+dist/
+build/
+spotify_appkey.key

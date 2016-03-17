@@ -1,169 +1,186 @@
-#!/usr/bin/env python
+import configparser
+import ssl
+import socket
+import threading
+from MusicPlayer import MusicPlayer, YoutubeQueueItem, SpotifyQueueItem
 
-from twisted.words.protocols import irc
-from twisted.internet import ssl, reactor, protocol
-from twisted.python import log
 
-import os
-import time
-import sys
-import getpass
-import ConfigParser
+class IrcClient(object):
 
-class MessageLogger:
-    """
-    An independent logger class (because separation of application
-    and protocol logic is a good thing).
-    """
-    def __init__(self, file):
-        self.file = file
+    def __init__(self, options):
+        self.server = options.get('server')
+        self.port = options.get('port')
+        self.ident = options.get('ident')
+        self.nick = options.get('nick')
+        self.realname = options.get('realname')
+        self.password = options.get('password')
+        self.ssl = options.get('ssl', False)
 
-    def log(self, message):
-        """Write a message to the file."""
-        timestamp = time.strftime("[%H:%M:%S]", time.localtime(time.time()))
-        self.file.write('%s %s\n' % (timestamp, message))
-        self.file.flush()
+        self.connection_thread = None
+        self.disconnect = threading.Event()
+        self.event_listeners = {}
 
-    def close(self):
-        self.file.close()
+    def connect(self):
+        self.connection_thread = threading.Thread(target=self.__connect)
+        self.connection_thread.start()
+        print("exit")
 
-class MusicBot(irc.IRCClient):
-    """A logging IRC bot."""
+    def disconnect(self):
+        self.disconnect.set()
 
-    commandPrefix = "!music"
+    def __connect(self):
+        read_buffer = ""
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if self.ssl:
+            self.s = ssl.wrap_socket(self.s)
 
-    def __init__(self):
-        self.commandHandler = CommandHandler(CommandManager())
+        self.s.connect((self.server, self.port))
+        self.__send_string("PASS {}\r\n".format(self.password))
+        self.__send_string("NICK {}\r\n".format(self.nick))
+        self.__send_string("USER {} {} bla :{}\r\n".format(self.ident, self.server, self.realname))
 
-    def connectionMade(self):
-        irc.IRCClient.connectionMade(self)
-        self.logger = MessageLogger(open(self.factory.filename, "a"))
-        self.logger.log("[connected at %s]" %
-                        time.asctime(time.localtime(time.time())))
+        while 1:
+            read_buffer = read_buffer+self.s.recv(1024).decode()
 
-    def connectionLost(self, reason):
-        irc.IRCClient.connectionLost(self, reason)
-        self.logger.log("[disconnected at %s]" %
-                        time.asctime(time.localtime(time.time())))
-        self.logger.close()
+            temp = read_buffer.split("\n")
+            read_buffer = temp.pop()
 
-    # callbacks for events
+            for line in temp:
+                print(line)
+                line = line.rstrip()
+                line = line.split()
+                print(line)
+                if line[0] == "PING":
+                    self.__send_string("PONG %s\r\n" % line[1])
 
-    def signedOn(self):
-        """Called when bot has succesfully signed on to server."""
-        self.join(self.factory.channel)
+                # we assume it is safe to send data after receiving the welcome message
+                if len(line) > 1 and line[1] == '001':
+                    self.on_connect()
 
-    def privmsg(self, user, channel, msg):
-        """This will get called when the bot receives a message."""
-        user = user.split('!', 1)[0]
-        self.logger.log("<%s> %s" % (user, msg))
+                if len(line) > 1 and line[1] == 'PRIVMSG':
+                    identString = line[0][1:]
+                    nick = identString.split("!")[0]
+                    realname = identString.split("!")[1].split("@")[0]
+                    ip = identString.split("@")[1]
 
-        if channel == self.factory.channel:
-            if str.startswith(msg, self.commandPrefix):
-                print "command prefix found!\n"
-                words = msg.split(" ")
-                commandName = "help"
-                if len(words) > 1:
-                    commandName = words[1]
+                    ident = Ident(nick, realname, ip)
 
-                arguments = words[2::]
-                output = self.commandHandler.handleCommand(self, user, commandName, arguments)
-                if output is not None:
-                    self.sendMessage(output)
+                    channel = line[2]
+                    message = " ".join(line[3:])[1:]
 
-    def registerCommand(self, command):
-        self.commandHandler.getCommandManager().addCommand(command)
+                    self.on_message(ident, channel, message)
 
-    def sendMessage(self, message):
-        print "sending message"
-        print message
+    def __send_string(self, string):
+        self.s.send(string.encode())
+
+    def __emit(self, eventname, data):
+        event_listeners = self.event_listeners
+        if eventname in event_listeners:
+            for listener in event_listeners[eventname]:
+                listener(self, data)
+
+    def send_message(self, dest, message):
         lines = message.split("\n")
         for line in lines:
-            self.say(self.factory.channel, line)
+            line = line.strip()
+            if len(line) > 0:
+                self.__send_string("PRIVMSG {} {}\r\n".format(dest, line))
 
-    def getCommandHandler(self):
-        return self.commandHandler
+    def on_message(self, ident, channel, message):
+        self.__emit('PRIVMSG', (ident, channel, message))
 
-    def getMaster(self):
-        return self.factory.master
+    def on_connect(self):
+        self.__emit('connected', None)
 
-class LogBotFactory(protocol.ClientFactory):
-    """A factory for LogBots.
+    def join_channel(self, channel):
+        self.__send_string("JOIN {}\r\n".format(channel))
 
-    A new protocol instance will be created each time we connect to the server.
+    def on(self, eventname, callback):
+        if eventname not in self.event_listeners:
+            self.event_listeners[eventname] = []
+
+        self.event_listeners[eventname].append(callback)
+
+
+class Ident(object):
+
+    def __init__(self, nick, ident, ip):
+        self.nick = nick
+        self.ident = ident
+        self.ip = ip
+
+    def get_nick(self):
+        return self.nick
+
+    def get_ident(self):
+        return self.ident
+
+    def get_ip(self):
+        return self.ip
+
+config = configparser.ConfigParser()
+config.read('bot.cfg')
+
+spotify_user = config.get('main', 'spotify_user')
+spotify_pass = config.get('main', 'spotify_pass')
+
+options = {
+    'server': config.get('main', 'server'),
+    'port': config.getint('main', 'port'),
+    'channel': config.get('main', 'channel'),
+    'ident': config.get('main', 'ident'),
+    'nick': config.get('main', 'nick'),
+    'realname': config.get('main', 'realname'),
+    'password': config.get('main', 'password'),
+    'ssl': True
+}
+
+wait_for_connect = threading.Event()
+
+
+def on_connect(bot, data):
+    wait_for_connect.set()
+
+
+def on_message(bot, data):
     """
 
-    def __init__(self, channel, nickname, password, master, filename):
-        self.channel = channel
-        self.filename = filename
-        self.nickname = nickname
-        self.password = password
-        self.master = master
+    :type bot: IrcClient
+    :type data: list
+    """
 
-    def buildProtocol(self, addr):
-        p = MusicBot()
-        p.registerCommand(HelpCommand())
-        p.registerCommand(NextCommand())
-        p.registerCommand(PrevCommand())
-        p.registerCommand(PauseCommand())
-        p.registerCommand(PlayCommand())
-        p.registerCommand(CurrentCommand())
-        p.registerCommand(CurrentUriCommand())
-        p.registerCommand(CurrentUrlCommand())
-        p.registerCommand(CurrentMetaCommand())
-        p.registerCommand(OpenUriCommand())
-        p.registerCommand(SearchCommand())
-        p.registerCommand(VolUpCommand())
-        p.registerCommand(VolDownCommand())
-        p.registerCommand(SetVolumeCommand())
-        p.registerCommand(LiveIsLifeCommand())
-        p.registerCommand(PiranhaCommand())
-        p.registerCommand(SvennebananCommand())
-        p.registerCommand(HoeCommand())
-        p.registerCommand(WhitelistCommand())
-        p.registerCommand(WhichUriCommand())
-        p.registerCommand(YoutubeCommand())
-        p.factory = self
-        p.nickname = self.nickname
-        p.password = self.password
-        return p
+    def print_help(bot, dest):
+        bot.send_message(dest, "---------MusicBot---------")
+        bot.send_message(dest, "!music yt <link> -- plays a youtube link")
+        bot.send_message(dest, "!music sp <link> -- plays a spotify link")
 
-    def clientConnectionLost(self, connector, reason):
-        """If we get disconnected, reconnect to server."""
-        connector.connect()
+    (ident, channel, message) = data
+    words = message.split(" ")
+    args = words[1:]
+    first_word = words[0]
+    if first_word == "!music":
+        if len(args) == 2 and args[0] == 'yt':
+            url = args[1]
+            item = YoutubeQueueItem(url)
+            player.add_to_queue(item)
+        elif len(args) == 2 and args[0] == 'sp':
+            url = args[1]
+            item = SpotifyQueueItem(url)
+            player.add_to_queue(item)
+        elif len(args) == 1 and args[0] == 'list':
+            queue = "Items in queue:\r\n"
+            queue += player.get_queue_string()
+            bot.send_message(channel, queue)
+        else:
+            print_help(bot, ident.get_nick())
 
-    def clientConnectionFailed(self, connector, reason):
-        print "connection failed:", reason
-        reactor.stop()
+player = MusicPlayer(spotify_user, spotify_pass)
+player.start()
 
+bot = IrcClient(options)
+bot.on('connected', on_connect)
+bot.on('PRIVMSG', on_message)
 
-if __name__ == '__main__':
-    from command import CommandManager, CommandHandler, HelpCommand, NextCommand, PrevCommand, CurrentCommand, VolUpCommand, VolDownCommand, SetVolumeCommand, WhitelistCommand, OpenUriCommand, SearchCommand, CurrentUriCommand, CurrentUrlCommand, PlayCommand, PauseCommand, CurrentMetaCommand, SvennebananCommand, PiranhaCommand, WhichUriCommand, LiveIsLifeCommand, YoutubeCommand, HoeCommand
-
-    config = ConfigParser.ConfigParser()
-    config.read('bot.config')
-
-    server = config.get('main', 'server')
-    port = config.getint('main', 'port')
-    channel = config.get('main', 'channel')
-    user = config.get('main', 'user')
-    password = config.get('main', 'password')
-    master = config.get('main', 'master')
-
-    if password == -1:
-        password = getpass.getpass()
-
-        # initialize logging
-    log.startLogging(sys.stdout)
-    # create factory protocol and application
-    f = LogBotFactory(channel, user, password, master, "log")
-
-    # connect factory to this host and port
-    reactor.connectSSL(server, port, f, ssl.ClientContextFactory())
-
-    # run bot
-    reactor.run()
-
-spotifyScript = os.path.realpath(os.path.dirname(__file__)) + "/spotify.sh"
-youtubeScript = "/usr/local/bin/mpsyt"
-whitelistFile = "whitelist.txt"
+bot.connect()
+wait_for_connect.wait()
+bot.join_channel(config.get('main', 'channel'))
