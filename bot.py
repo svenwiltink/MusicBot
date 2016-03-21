@@ -23,7 +23,6 @@ class IrcClient(object):
     def connect(self):
         self.connection_thread = threading.Thread(target=self.__connect)
         self.connection_thread.start()
-        print("exit")
 
     def disconnect(self):
         self.disconnect.set()
@@ -150,9 +149,9 @@ def on_message(bot, data):
     """
 
     def print_help(bot, dest):
-        bot.send_message(dest, "---------MusicBot---------")
-        bot.send_message(dest, "!music yt <link> -- plays a youtube link")
-        bot.send_message(dest, "!music sp <link> -- plays a spotify link")
+        bot.send_message(dest, "MusicBot")
+        bot.send_message(dest, "!music yt <link>  plays a youtube link")
+        bot.send_message(dest, "!music sp <link>  plays a spotify link")
 
     (ident, channel, message) = data
     words = message.split(" ")
@@ -167,6 +166,8 @@ def on_message(bot, data):
             url = args[1]
             item = SpotifyQueueItem(url)
             player.add_to_queue(item)
+        elif len(args) == 1 and args[0] == 'next':
+            player.skip_song()
         elif len(args) == 1 and args[0] == 'list':
             queue = "Items in queue:\r\n"
             queue += player.get_queue_string()
@@ -174,7 +175,14 @@ def on_message(bot, data):
         else:
             print_help(bot, ident.get_nick())
 
-player = MusicPlayer(spotify_user, spotify_pass)
+player_options = {}
+if len(spotify_user) > 0:
+    player_options['spotify_username'] = spotify_user
+    player_options['spotify_password'] = spotify_pass
+else:
+    print("No spotify user found, disabling support")
+
+player = MusicPlayer(player_options)
 player.start()
 
 bot = IrcClient(options)
